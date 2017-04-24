@@ -5,6 +5,8 @@ from yahoo_finance import Share
 from Tkinter import *
 import tkMessageBox
 import datetime #used for date to int conversion
+import matplotlib.pyplot as plt
+import numpy as np
 
 #Global variables:
 predicted_price = None
@@ -12,8 +14,11 @@ stock_dates_list=[]
 stock_close_prices_list=[]
 stock_props_between_dates = []
 number_of_prices = len(stock_dates_list)
-stock_dates_as_int_list = []
 
+stock_dates_as_int_list = []
+regression_prices = []
+slope = 0
+intercept=0
 
 def dateToInt(date_str):
     '''
@@ -56,10 +61,13 @@ def dataToLists():
     global stock_close_prices_list
     for i in reversed(range(len(stock_props_between_dates))):
         stock_dates_list.append(stock_props_between_dates[i]['Date'])
-        stock_close_prices_list.append(stock_props_between_dates[i]['Close'])
+        stock_close_prices_list.append(float(stock_props_between_dates[i]['Close']))
     allDatesToInts()
+    calcSlopeAndIntercept()
 
 def calcSlopeAndIntercept():
+    global slope,intercept,number_of_prices
+    number_of_prices = len(stock_dates_list)
     # calculating the slope(m) of the linear regresion
     # step 1
     # collect all our points as (dates,prices) and we got the number_of_prices as number of points
@@ -74,16 +82,17 @@ def calcSlopeAndIntercept():
     sum_of_dates = 0
     for index in range(len(stock_dates_as_int_list)):
         sum_of_dates = sum_of_dates + stock_dates_as_int_list[index]
-    sumOfPrices = 0
+
+    sum_of_prices = 0
     for index in range(len(stock_close_prices_list)):
-        sumOfPrices = sumOfPrices + stock_close_prices_list[index]
-    b = sum_of_dates * sumOfPrices
+        sum_of_prices = sum_of_prices + stock_close_prices_list[index]
+    b = sum_of_dates * sum_of_prices
     # step 4
     # Let c equal number_of_prices time the sum of all squared date-values , like so :
-    squaredDate = 0
+    squared_date = 0
     for index in range(len(stock_dates_as_int_list)):
-        squaredDate = squaredDate + stock_dates_as_int_list[index] * stock_dates_as_int_list[index]
-    c = number_of_prices * squaredDate
+        squared_date = squared_date + stock_dates_as_int_list[index] * stock_dates_as_int_list[index]
+    c = number_of_prices * squared_date
     # step 5
     # Let d equal the squared sume of all date-values:
     d = sum_of_dates * sum_of_dates
@@ -93,7 +102,7 @@ def calcSlopeAndIntercept():
     # calculating the intercept
     # step 1
     # Let e equal the sum of all prices-values
-    e = sumOfPrices
+    e = sum_of_prices
     # step 2
     # Let f equal the slope times the sum of all date-values:
     f = slope * sum_of_dates
@@ -101,7 +110,51 @@ def calcSlopeAndIntercept():
     # Plug the values into intercept equalation
     intercept = (e - f) / number_of_prices
     # to calculate the prediction use :
-    # predictedPrice = slope*date+intercept  dateToInt(prediction_date)
+    # predicted_price = slope*date+intercept  dateToInt(prediction_date)
+    plotDisplay(stock_close_prices_list,stock_dates_list)
+
+# Makes an array that represents the regression line.
+def makeRegressionArray():
+    global regression_prices
+    # Calculating the regression prices.
+    for index in range(len(stock_dates_as_int_list)):
+        regression_prices.append(slope * (stock_dates_as_int_list[index]) + intercept)
+
+    first_price = regression_prices[0]
+    last_price = regression_prices[len(regression_prices) -1]
+
+    new_array = []
+    new_array.append(first_price)
+
+    diff = (last_price - first_price)/(len(regression_prices)-1)
+
+    for i in range(len(regression_prices) -1):
+        n = new_array[i] + diff
+        new_array.append(n)
+
+    return new_array
+
+def plotDisplay(price, date):
+
+    length = len(date)
+    x = range(len(date))
+    plt.xticks([0, length/2, length-1], (date[0], date[length/2], date[length-1]))
+    plt.plot(x, price, "g")
+
+    plt.xlabel('Dates')
+    plt.ylabel('Stock Closing Price')
+    plt.title('Stock Graph')
+
+    fit = np.polyfit(stock_dates_as_int_list, price, 1)
+    fit_fn = np.poly1d(fit)
+
+    regression = makeRegressionArray()
+    plt.plot(regression, '--k')
+
+    plt.get_current_fig_manager().window.wm_geometry("+400+135")  # move the window
+    plt.gcf().canvas.set_window_title("ScientificSW-Ex1-StockPricePrediction")
+
+    plt.show()
 
 def createForm():
     global root
