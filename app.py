@@ -12,6 +12,14 @@ stock_close_prices_list=[]
 stock_props_between_dates = []
 
 
+def fromFormToVars(event):
+    global stock_name,start_date,end_date,prediction_date
+    stock_name = stock_name_entry.get()
+    start_date=start_date_entry.get()
+    end_date=end_date_entry.get()
+    prediction_date=prediction_date_entry.get()
+    getDataFromYahoo()
+
 def getDataFromYahoo():
     '''
     This function will get variables from GUI Form,
@@ -67,7 +75,7 @@ def createForm():
 
     #Button
     find_button = Button(root, text="Find Regression",font=("Helvetica", 12))
-    find_button.bind("<ButtonRelease-1>", getDataFromYahoo)
+    find_button.bind("<ButtonRelease-1>", fromFormToVars)
     find_button.place(x=37, y=112, width=163, height=38)
     root.mainloop()
 
