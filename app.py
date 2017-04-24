@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 #Global variables:
-predicted_price = None
+predicted_price = 0
+
 stock_dates_list=[]
 stock_close_prices_list=[]
 stock_props_between_dates = []
@@ -34,11 +35,13 @@ def allDatesToInts():
     Function that converts all stock dates to list of ints
     '''
     global stock_dates_as_int_list
+    stock_dates_as_int_list = []
     for date in range(len(stock_dates_list)):
         stock_dates_as_int_list.append(dateToInt(stock_dates_list[date]))
 
 def fromFormToVars(event):
     global stock_name,start_date,end_date,prediction_date
+    plt.close()
     stock_name = stock_name_entry.get()
     start_date=start_date_entry.get()
     end_date=end_date_entry.get()
@@ -59,6 +62,8 @@ def getDataFromYahoo():
 def dataToLists():
     global stock_dates_list
     global stock_close_prices_list
+    stock_dates_list = []
+    stock_close_prices_list = []
     for i in reversed(range(len(stock_props_between_dates))):
         stock_dates_list.append(stock_props_between_dates[i]['Date'])
         stock_close_prices_list.append(float(stock_props_between_dates[i]['Close']))
@@ -111,11 +116,20 @@ def calcSlopeAndIntercept():
     intercept = (e - f) / number_of_prices
     # to calculate the prediction use :
     # predicted_price = slope*date+intercept  dateToInt(prediction_date)
+    calculatePredictedPrice()
     plotDisplay(stock_close_prices_list,stock_dates_list)
+
+
+def calculatePredictedPrice():
+    global predicted_price
+    predicted_price =slope*dateToInt(prediction_date)+intercept
+    predicted_price=round(predicted_price,5)
+    pricted_price_label.set(predicted_price)
 
 # Makes an array that represents the regression line.
 def makeRegressionArray():
     global regression_prices
+    regression_prices = []
     # Calculating the regression prices.
     for index in range(len(stock_dates_as_int_list)):
         regression_prices.append(slope * (stock_dates_as_int_list[index]) + intercept)
@@ -155,10 +169,14 @@ def plotDisplay(price, date):
     plt.gcf().canvas.set_window_title("ScientificSW-Ex1-StockPricePrediction")
 
     plt.show()
+    plt.clf()
+    plt.cla()
+    plt.close()
+
 
 def createForm():
     global root
-    global stock_name_entry,start_date_entry,end_date_entry,prediction_date_entry
+    global stock_name_entry,start_date_entry,end_date_entry,prediction_date_entry,pricted_price_label
 
     root = Tk()
     root.title("ScientificSW-Ex1-StockPricePrediction")
@@ -179,7 +197,8 @@ def createForm():
     make_label(root, 374, 32, 25, 93, text='End Date', background=None)
     make_label(root, 513, 32, 25, 144, text='Prediction Date', background=None)
     make_label(root, 32, 170, 25, 104, text='Prediction:', background=None)
-    make_label(root, 133, 170, 25, 143, text=predicted_price, background=None)
+    pricted_price_label = StringVar()
+    make_label(root, 133, 170, 25, 143, textvariable=pricted_price_label, background=None)
 
     #Entries
     stock_name_entry = Entry(root,font=("Helvetica", 12))
