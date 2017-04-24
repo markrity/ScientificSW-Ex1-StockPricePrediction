@@ -23,6 +23,13 @@ def getDataFromYahoo():
     stock_props_between_dates = stock_name_from_yahoo.get_historical(start_date, end_date)
     dataToLists()
 
+def dataToLists():
+    global stock_dates_list
+    global stock_close_prices_list
+    for i in reversed(range(len(stock_props_between_dates))):
+        stock_dates_list.append(stock_props_between_dates[i]['Date'])
+        stock_close_prices_list.append(stock_props_between_dates[i]['Close'])
+
 def createForm():
     global root
     global stock_name_entry,start_date_entry,end_date_entry,prediction_date_entry
