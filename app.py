@@ -4,13 +4,33 @@
 from yahoo_finance import Share
 from Tkinter import *
 import tkMessageBox
+import datetime #used for date to int conversion
 
 #Global variables:
 predicted_price = None
 stock_dates_list=[]
 stock_close_prices_list=[]
 stock_props_between_dates = []
+number_of_prices = len(stock_dates_list)
+stock_dates_as_int_list = []
 
+
+def dateToInt(date_str):
+    '''
+    Function that converts dates to ints.
+    :param date_str:  Date as a string in YYYY-MM-DD format.
+    :return: Date an int variable
+    '''
+    year, month, day = map(int, date_str.split('-'))
+    return (datetime.datetime(year, month, day) - datetime.datetime(1900, 1, 1)).days + 2
+
+def allDatesToInts():
+    '''
+    Function that converts all stock dates to list of ints
+    '''
+    global stock_dates_as_int_list
+    for date in range(len(stock_dates_list)):
+        stock_dates_as_int_list.append(dateToInt(stock_dates_list[date]))
 
 def fromFormToVars(event):
     global stock_name,start_date,end_date,prediction_date
@@ -37,6 +57,51 @@ def dataToLists():
     for i in reversed(range(len(stock_props_between_dates))):
         stock_dates_list.append(stock_props_between_dates[i]['Date'])
         stock_close_prices_list.append(stock_props_between_dates[i]['Close'])
+    allDatesToInts()
+
+def calcSlopeAndIntercept():
+    # calculating the slope(m) of the linear regresion
+    # step 1
+    # collect all our points as (dates,prices) and we got the number_of_prices as number of points
+    # step 2
+    # Let a equal number_of_prices times the summation of all date-values multiplied by their corresponding price-values, so :
+    sum_of_mults = 0
+    for index in range(number_of_prices):
+        sum_of_mults = sum_of_mults + stock_dates_as_int_list[index] * stock_close_prices_list[index]
+    a = sum_of_mults * number_of_prices
+    # step 3
+    # Let b equal the sum of all date-values times the sum of all price-values, like so :
+    sum_of_dates = 0
+    for index in range(len(stock_dates_as_int_list)):
+        sum_of_dates = sum_of_dates + stock_dates_as_int_list[index]
+    sumOfPrices = 0
+    for index in range(len(stock_close_prices_list)):
+        sumOfPrices = sumOfPrices + stock_close_prices_list[index]
+    b = sum_of_dates * sumOfPrices
+    # step 4
+    # Let c equal number_of_prices time the sum of all squared date-values , like so :
+    squaredDate = 0
+    for index in range(len(stock_dates_as_int_list)):
+        squaredDate = squaredDate + stock_dates_as_int_list[index] * stock_dates_as_int_list[index]
+    c = number_of_prices * squaredDate
+    # step 5
+    # Let d equal the squared sume of all date-values:
+    d = sum_of_dates * sum_of_dates
+    # step 6
+    # plug the values that you calculated for a,b,c and d into equation to calculate the slope - m of the regression line
+    slope = (a - b) / (c - d)
+    # calculating the intercept
+    # step 1
+    # Let e equal the sum of all prices-values
+    e = sumOfPrices
+    # step 2
+    # Let f equal the slope times the sum of all date-values:
+    f = slope * sum_of_dates
+    # step 3
+    # Plug the values into intercept equalation
+    intercept = (e - f) / number_of_prices
+    # to calculate the prediction use :
+    # predictedPrice = slope*date+intercept  dateToInt(prediction_date)
 
 def createForm():
     global root
